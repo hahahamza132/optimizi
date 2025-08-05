@@ -124,6 +124,29 @@ export const masterOrderService = {
         const subOrderRef = await addDoc(collection(db, SUB_ORDERS_COLLECTION), subOrder);
         subOrderIds.push(subOrderRef.id);
 
+        // Create notification for the supplier about the new order
+        try {
+          await addDoc(collection(db, 'notifications'), {
+            type: 'order',
+            title: 'Nouvelle commande reçue',
+            message: `Nouvelle commande de ${orderData.userName} - Total: €${fournisseurTotal.toFixed(2)}`,
+            orderId: subOrderRef.id,
+            fournisseurId: fournisseurId,
+            isRead: false,
+            createdAt: new Date().toISOString(),
+            orderData: {
+              customerName: orderData.userName,
+              customerEmail: orderData.userEmail,
+              total: fournisseurTotal,
+              itemCount: orderItems.length,
+              status: 'pending'
+            }
+          });
+        } catch (notificationError) {
+          console.error('Failed to create supplier notification:', notificationError);
+          // Don't throw error for notification failure, order creation should succeed
+        }
+
         // Send confirmation email for each sub-order to the fournisseur
         try {
           await emailService.sendOrderConfirmation({

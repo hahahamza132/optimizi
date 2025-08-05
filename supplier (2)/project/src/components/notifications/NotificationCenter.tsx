@@ -1,226 +1,139 @@
-// File: /home/ubuntu/project-bolt/project/src/components/notifications/NotificationCenter.tsx
-
+// Simple notification center for suppliers - focused on orders only
 import React, { useState } from 'react';
-import { Menu, Transition } from '@headlessui/react';
-import { Fragment } from 'react';
-import {
-  BellIcon,
-  CheckIcon,
-  EyeIcon,
-  XMarkIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/react/24/outline';
+import { BellIcon, CheckIcon } from '@heroicons/react/24/outline';
 import { useNotifications } from '../../hooks/useNotifications';
 import { NotificationService } from '../../services/notificationService';
-import { AppNotification } from '../../models';
-import { useNavigate } from 'react-router-dom';
 
-interface NotificationCenterProps {
-  fournisseurId: string | null;
-}
+const NotificationCenter: React.FC = () => {
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  const [isOpen, setIsOpen] = useState(false);
 
-const NotificationCenter: React.FC<NotificationCenterProps> = ({ fournisseurId }) => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications(fournisseurId);
-  const [showAll, setShowAll] = useState(false);
-  const navigate = useNavigate();
-
-  const displayedNotifications = showAll ? notifications : notifications.slice(0, 5);
-
-  const handleNotificationClick = async (notification: AppNotification) => {
-    if (!notification.isRead) {
-      await markAsRead(notification.id);
-    }
-    
-    // Navigate to relevant page if orderId exists
-    if (notification.orderId) {
-      navigate(`/orders?highlight=${notification.orderId}`);
-    }
+  const handleNotificationClick = async (notificationId: string, orderId: string) => {
+    await markAsRead(notificationId);
+    setIsOpen(false);
+    // Navigate to order details
+    window.location.href = `/orders`;
   };
 
-  const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
-
-    if (diffInMinutes < 1) return 'Just now';
-    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
-    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)}h ago`;
-    return `${Math.floor(diffInMinutes / 1440)}d ago`;
-  };
-
-  const handleViewAllNotifications = () => {
-    navigate('/notifications');
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+    setIsOpen(false);
   };
 
   return (
-    <Menu as="div" className="relative">
-      <Menu.Button className="relative p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-xl transition-all duration-200 group">
-        <BellIcon className="h-6 w-6 group-hover:scale-110 transition-transform duration-200" />
+    <div className="relative">
+      {/* Notification Bell Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+      >
+        <BellIcon className="h-6 w-6" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 text-xs font-bold text-white bg-gradient-to-r from-red-500 to-red-600 rounded-full shadow-lg animate-pulse">
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
-      </Menu.Button>
+      </button>
 
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-200"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-150"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <Menu.Items className="absolute right-0 z-50 mt-2 w-96 origin-top-right rounded-3xl bg-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none border border-gray-100">
-          <div className="p-6">
+      {/* Dropdown Panel */}
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 z-10" 
+            onClick={() => setIsOpen(false)}
+          />
+          
+          {/* Notification Panel */}
+          <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-2">
-                <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
-                {unreadCount > 0 && (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                    {unreadCount} new
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center space-x-2">
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllAsRead}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors duration-200"
-                    title="Mark all as read"
-                  >
-                    <CheckIcon className="h-4 w-4" />
-                  </button>
-                )}
+            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900">Notifications</h3>
+              {unreadCount > 0 && (
                 <button
-                  onClick={handleViewAllNotifications}
-                  className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
-                  title="View all notifications"
+                  onClick={handleMarkAllAsRead}
+                  className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
                 >
-                  <ArrowTopRightOnSquareIcon className="h-4 w-4" />
+                  <CheckIcon className="h-4 w-4" />
+                  Tout marquer comme lu
                 </button>
-              </div>
+              )}
             </div>
 
             {/* Notifications List */}
-            <div className="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+            <div className="max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="text-center py-8">
-                  <div className="mx-auto h-16 w-16 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-4">
-                    <BellIcon className="h-8 w-8 text-blue-600" />
-                  </div>
-                  <p className="text-gray-500 text-sm font-medium">No notifications yet</p>
-                  <p className="text-gray-400 text-xs mt-1">You'll see updates here when they arrive</p>
+                <div className="px-4 py-8 text-center text-gray-500">
+                  <BellIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                  <p>Aucune notification</p>
                 </div>
               ) : (
-                <>
-                  {displayedNotifications.map((notification) => (
-                    <Menu.Item key={notification.id}>
-                      {({ active }) => (
-                        <div
-                          onClick={() => handleNotificationClick(notification)}
-                          className={`block p-4 rounded-2xl cursor-pointer transition-all duration-200 transform hover:scale-[1.02] ${
-                            active ? 'bg-gray-50' : ''
-                          } ${
-                            !notification.isRead 
-                              ? 'bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-100 shadow-sm' 
-                              : 'border border-gray-100 hover:border-gray-200'
-                          }`}
-                        >
-                          <div className="flex items-start space-x-3">
-                            <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium shadow-sm ${
-                              NotificationService.getNotificationColor(notification.type)
-                            }`}>
-                              {NotificationService.getNotificationIcon(notification.type)}
-                            </div>
-                            
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center justify-between">
-                                <p className={`text-sm font-semibold truncate ${
-                                  !notification.isRead ? 'text-gray-900' : 'text-gray-700'
-                                }`}>
-                                  {notification.title}
-                                </p>
-                                {!notification.isRead && (
-                                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 ml-2"></div>
-                                )}
-                              </div>
-                              
-                              <p className="text-sm text-gray-600 mt-1 line-clamp-2 leading-relaxed">
-                                {notification.message}
-                              </p>
-                              
-                              <div className="flex items-center justify-between mt-3">
-                                <span className="text-xs text-gray-500 font-medium">
-                                  {formatTimeAgo(notification.createdAt)}
-                                </span>
-                                
-                                {notification.orderId && (
-                                  <span className="text-xs text-blue-600 font-semibold bg-blue-50 px-2 py-1 rounded-lg">
-                                    #{notification.orderId.slice(-6)}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                notifications.slice(0, 10).map((notification) => (
+                  <div
+                    key={notification.id}
+                    onClick={() => handleNotificationClick(notification.id, notification.orderId)}
+                    className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors duration-200 ${
+                      !notification.isRead ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Order Icon */}
+                      <div className="flex-shrink-0 mt-1">
+                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 text-sm">🛍️</span>
+                        </div>
+                      </div>
+                      
+                      {/* Notification Content */}
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${!notification.isRead ? 'text-gray-900' : 'text-gray-700'}`}>
+                          {notification.title}
+                        </p>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {notification.message}
+                        </p>
+                        {notification.orderData && (
+                          <div className="text-xs text-gray-500 mt-2">
+                            Client: {notification.orderData.customerName} • 
+                            Articles: {notification.orderData.itemCount} • 
+                            Total: €{notification.orderData.total.toFixed(2)}
                           </div>
+                        )}
+                        <p className="text-xs text-gray-400 mt-1">
+                          {NotificationService.formatTime(notification.createdAt)}
+                        </p>
+                      </div>
+                      
+                      {/* Unread Indicator */}
+                      {!notification.isRead && (
+                        <div className="flex-shrink-0 mt-2">
+                          <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                         </div>
                       )}
-                    </Menu.Item>
-                  ))}
-
-                  {/* Show More/Less Button */}
-                  {notifications.length > 5 && (
-                    <div className="pt-4 border-t border-gray-100">
-                      <button
-                        onClick={() => setShowAll(!showAll)}
-                        className="w-full text-center text-sm text-blue-600 hover:text-blue-700 font-medium py-2 rounded-xl hover:bg-blue-50 transition-all duration-200"
-                      >
-                        {showAll ? 'Show Less' : `Show ${notifications.length - 5} More`}
-                      </button>
                     </div>
-                  )}
-
-                  {/* View All Button */}
-                  <div className="pt-2">
-                    <button
-                      onClick={handleViewAllNotifications}
-                      className="w-full text-center text-sm text-gray-600 hover:text-gray-800 font-medium py-3 rounded-xl hover:bg-gray-50 transition-all duration-200 border border-gray-200 hover:border-gray-300"
-                    >
-                      View All Notifications
-                    </button>
                   </div>
-                </>
+                ))
               )}
             </div>
-          </div>
-        </Menu.Items>
-      </Transition>
 
-      <style jsx>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #f1f5f9;
-          border-radius: 2px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #cbd5e1;
-          border-radius: 2px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #94a3b8;
-        }
-        .line-clamp-2 {
-          display: -webkit-box;
-          -webkit-line-clamp: 2;
-          -webkit-box-orient: vertical;
-          overflow: hidden;
-        }
-      `}</style>
-    </Menu>
+            {/* Footer */}
+            {notifications.length > 10 && (
+              <div className="px-4 py-3 border-t border-gray-200">
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    window.location.href = '/notifications';
+                  }}
+                  className="w-full text-center text-sm text-blue-600 hover:text-blue-800"
+                >
+                  Voir toutes les notifications
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </div>
   );
 };
 

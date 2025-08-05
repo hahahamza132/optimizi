@@ -114,23 +114,26 @@ export interface MonthlyData {
   orders: number;
 }
 
-// Notification Models
+// Notification Models (simple order notifications only)
 export interface AppNotification {
   id: string;
-  type: 'order' | 'payment' | 'system' | 'product';
+  type: 'order';
   title: string;
   message: string;
-  orderId?: string;
+  orderId: string;
   fournisseurId: string;
   isRead: boolean;
   createdAt: string;
-  data?: any;
+  orderData?: {
+    customerName: string;
+    customerEmail: string;
+    total: number;
+    itemCount: number;
+    status: string;
+  };
 }
 
+// Simple notification preferences (removed complex preferences)
 export interface NotificationPreferences {
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  orderNotifications: boolean;
-  paymentNotifications: boolean;
-  systemNotifications: boolean;
+  orderNotifications: boolean; // Only order notifications for suppliers
 }
