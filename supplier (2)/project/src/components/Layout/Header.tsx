@@ -10,7 +10,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useFournisseur } from '../../hooks/useFournisseur';
-import EnhancedNotificationCenter from '../notifications/EnhancedNotificationCenter';
+import NotificationCenter from '../notifications/NotificationCenter';
 
 const Header: React.FC = () => {
   const { userData, logout } = useAuth();
@@ -35,10 +35,7 @@ const Header: React.FC = () => {
         
         <div className="flex items-center space-x-4">
           {/* Notifications */}
-          <EnhancedNotificationCenter 
-            fournisseurId={fournisseur?.id || null} 
-            fournisseurName={fournisseur?.name || ''}
-          />
+          <NotificationCenter />
 
           {/* Profile dropdown */}
           <Menu as="div" className="relative">

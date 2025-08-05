@@ -15,7 +15,7 @@ import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
 import Categories from './pages/Categories';
 import Orders from './pages/Orders';
-import EnhancedNotifications from './pages/EnhancedNotifications';
+import Notifications from './pages/EnhancedNotifications';
 import Profile from './pages/Profile';
 import Fournisseur from './pages/Fournisseur';
 
@@ -84,7 +84,7 @@ function App() {
               <ProtectedRoute>
                 <StockDecrementProvider>
                   <Layout>
-                    <EnhancedNotifications />
+                    <Notifications />
                   </Layout>
                 </StockDecrementProvider>
               </ProtectedRoute>
