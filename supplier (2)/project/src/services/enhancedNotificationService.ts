@@ -523,7 +523,7 @@ export class EnhancedNotificationService {
     });
   }
 
-  // Email notification simulation (in production, integrate with email service)
+  // Email notification using SupplierEmailService
   private static async sendEmailNotification(notificationId: string, notification: any): Promise<void> {
     try {
       console.log(`📧 Sending email notification: ${notification.title}`);
@@ -534,12 +534,52 @@ export class EnhancedNotificationService {
         emailSentAt: new Date().toISOString()
       });
       
-      // In production, integrate with email service like SendGrid, Mailgun, etc.
-      // await emailService.send({
-      //   to: notification.fournisseurEmail,
-      //   subject: notification.title,
-      //   html: this.generateEmailTemplate(notification)
-      // });
+      // Import and use the supplier email service
+      const { supplierEmailService } = await import('./supplierEmailService');
+      
+      // Initialize the email service if not already done
+      supplierEmailService.initialize();
+      
+      // Check if email service is configured
+      if (!supplierEmailService.isConfigured()) {
+        console.warn('Supplier email service not configured. Please set up EmailJS credentials.');
+        return;
+      }
+      
+      // If this is an order notification, send order details email
+      if (notification.type === 'order' && notification.orderData) {
+        // Create a mock order object from notification data for email
+        const mockOrder = {
+          id: notification.orderId || notification.id,
+          masterOrderId: notification.orderId || notification.id,
+          fournisseurId: notification.fournisseurId,
+          fournisseurName: notification.fournisseurName || 'Fournisseur',
+          userId: notification.orderData.customerId || 'unknown',
+          userEmail: notification.orderData.customerEmail,
+          userName: notification.orderData.customerName,
+          userPhone: notification.orderData.customerPhone || '',
+          subtotal: notification.orderData.subtotal || 0,
+          deliveryFee: 0,
+          tax: 0,
+          total: notification.orderData.total,
+          status: notification.orderData.status || 'pending',
+          paymentStatus: 'pending' as const,
+          paymentMethod: 'unknown',
+          deliveryAddress: {
+            street: notification.orderData.deliveryAddress?.street || 'Adresse non spécifiée',
+            city: notification.orderData.deliveryAddress?.city || 'Ville non spécifiée',
+            postalCode: notification.orderData.deliveryAddress?.postalCode || '00000',
+            country: notification.orderData.deliveryAddress?.country || 'Pays non spécifié'
+          },
+          orderNotes: notification.orderData.notes || '',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          items: notification.orderData.items || []
+        };
+        
+        // Send the order notification email
+        await supplierEmailService.sendOrderNotification(mockOrder);
+      }
       
     } catch (error) {
       console.error('Error sending email notification:', error);
