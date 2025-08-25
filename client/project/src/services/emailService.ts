@@ -138,7 +138,11 @@ export class EmailService {
     serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || 'YOUR_EMAILJS_SERVICE_ID',
     
     // REQUIRED: Replace with your EmailJS Template IDs
-    orderNotificationTemplateId: import.meta.env.VITE_EMAILJS_ORDER_TEMPLATE_ID || 'YOUR_ORDER_TEMPLATE_ID',
+    orderNotificationTemplateId: (
+      import.meta.env.VITE_EMAILJS_SUPPLIER_ORDER_TEMPLATE_ID ||
+      import.meta.env.VITE_EMAILJS_ORDER_TEMPLATE_ID ||
+      'YOUR_ORDER_TEMPLATE_ID'
+    ),
     contactFormTemplateId: import.meta.env.VITE_EMAILJS_CONTACT_TEMPLATE_ID || 'YOUR_CONTACT_TEMPLATE_ID',
     
     // REQUIRED: Replace with your EmailJS Public Key
@@ -183,6 +187,10 @@ export class EmailService {
     itemCount: number;
     deliveryAddress: string;
     paymentMethod: string;
+    userPhone?: string;
+    orderNotes?: string;
+    items?: Array<{ name: string; quantity: number; unitPrice: number }>;
+    orderItemsString?: string;
   }): Promise<boolean> {
     if (!this.isInitialized) {
       console.error('EmailJS not initialized');
@@ -210,16 +218,34 @@ export class EmailService {
       const personalizedSubject = template.subject
         .replace(/{orderNumber}/g, orderNumber);
 
+      // Build ordered items string for the email template if not provided
+      const orderItemsString = orderData.orderItemsString ?? (
+        orderData.items && orderData.items.length > 0
+          ? orderData.items
+              .map(i => `- ${i.quantity} x ${i.name} — €${i.unitPrice.toFixed(2)}`)
+              .join('\n')
+          : ''
+      );
+
+      // Match your EmailJS template variables
       const templateParams = {
-        to_email: orderData.userEmail,
+        // To Email field in template uses {{email}}
+        email: orderData.userEmail,
+        // Optional display name if used in template
         to_name: orderData.userName,
         subject: personalizedSubject,
         message: personalizedMessage,
         order_id: orderNumber,
         status: orderData.status,
-        status_type: template.type,
-        company_name: 'Optimizi'
-      };
+        customer_name: orderData.userName,
+        customer_email: orderData.userEmail,
+        customer_phone: orderData.userPhone || '',
+        order_total: orderData.total.toFixed(2),
+        item_count: orderData.itemCount.toString(),
+        delivery_address: orderData.deliveryAddress,
+        order_notes: orderData.orderNotes || '',
+        order_items: orderItemsString
+      } as Record<string, string>;
 
       const response = await emailjs.send(
         this.config.serviceId,

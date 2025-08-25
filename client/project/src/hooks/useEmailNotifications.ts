@@ -45,6 +45,11 @@ export const useEmailNotifications = () => {
         // Format delivery address for email
         const deliveryAddress = `${order.deliveryAddress.street}, ${order.deliveryAddress.city}, ${order.deliveryAddress.postalCode}, ${order.deliveryAddress.country}`;
         
+        // Build items string and lightweight list for template
+        const itemsString = order.items
+          .map(i => `- ${i.quantity} x ${i.productName} — €${i.unitPrice.toFixed(2)}`)
+          .join('\n');
+
         // Send email notification
         await emailService.sendOrderNotification({
           userEmail: order.userEmail,
@@ -54,7 +59,10 @@ export const useEmailNotifications = () => {
           total: order.total,
           itemCount: order.items.length,
           deliveryAddress: deliveryAddress,
-          paymentMethod: order.paymentMethod
+          paymentMethod: order.paymentMethod,
+          userPhone: order.userPhone,
+          orderNotes: order.orderNotes,
+          orderItemsString: itemsString
         });
       } catch (error) {
         console.error('Failed to send email notification for order:', order.id, error);
