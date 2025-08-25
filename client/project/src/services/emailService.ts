@@ -138,7 +138,11 @@ export class EmailService {
     serviceId: import.meta.env.VITE_EMAILJS_SERVICE_ID || 'YOUR_EMAILJS_SERVICE_ID',
     
     // REQUIRED: Replace with your EmailJS Template IDs
-    orderNotificationTemplateId: import.meta.env.VITE_EMAILJS_ORDER_TEMPLATE_ID || 'YOUR_ORDER_TEMPLATE_ID',
+    orderNotificationTemplateId: (
+      import.meta.env.VITE_EMAILJS_SUPPLIER_ORDER_TEMPLATE_ID ||
+      import.meta.env.VITE_EMAILJS_ORDER_TEMPLATE_ID ||
+      'YOUR_ORDER_TEMPLATE_ID'
+    ),
     contactFormTemplateId: import.meta.env.VITE_EMAILJS_CONTACT_TEMPLATE_ID || 'YOUR_CONTACT_TEMPLATE_ID',
     
     // REQUIRED: Replace with your EmailJS Public Key
