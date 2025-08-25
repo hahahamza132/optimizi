@@ -21,7 +21,8 @@ const Sidebar: React.FC = () => {
     { name: 'Categories', href: '/categories', icon: TagIcon },
     { name: 'Supplier Info', href: '/fournisseur', icon: IdentificationIcon },
     { name: 'Notifications', href: '/notifications', icon: BellIcon },
-    { name: 'Profile', href: '/profile', icon: UserIcon }
+    { name: 'Profile', href: '/profile', icon: UserIcon },
+    { name: 'Email Test', href: '/email-test', icon: BellIcon }
   ];
 
   return (

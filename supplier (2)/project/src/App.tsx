@@ -18,6 +18,7 @@ import Orders from './pages/Orders';
 import Notifications from './pages/EnhancedNotifications';
 import Profile from './pages/Profile';
 import Fournisseur from './pages/Fournisseur';
+import EmailTest from './pages/EmailTest';
 
 function App() {
   return (
@@ -105,6 +106,16 @@ function App() {
                 <StockDecrementProvider>
                   <Layout>
                     <Fournisseur />
+                  </Layout>
+                </StockDecrementProvider>
+              </ProtectedRoute>
+            } />
+            
+            <Route path="/email-test" element={
+              <ProtectedRoute>
+                <StockDecrementProvider>
+                  <Layout>
+                    <EmailTest />
                   </Layout>
                 </StockDecrementProvider>
               </ProtectedRoute>

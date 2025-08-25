@@ -1,5 +1,7 @@
 import emailjs from '@emailjs/browser';
 import { Order, OrderItem, DeliveryAddress } from '../models';
+import { collection, query, where, getDocs } from 'firebase/firestore';
+import { db } from '../config/config';
 
 // Email configuration interface
 interface EmailConfig {
@@ -233,6 +235,11 @@ export class SupplierEmailService {
       return false;
     }
 
+    if (!this.isConfigured()) {
+      console.error('Supplier EmailJS not properly configured');
+      return false;
+    }
+
     try {
       const template = ORDER_STATUS_TEMPLATES[order.status];
       if (!template) {
@@ -242,47 +249,62 @@ export class SupplierEmailService {
 
       const orderNumber = order.id.slice(-8).toUpperCase();
       
+      // Get supplier email from database
+      const supplierEmail = await this.getSupplierEmail(order.fournisseurId);
+      if (!supplierEmail) {
+        console.error(`No email found for supplier: ${order.fournisseurId}`);
+        return false;
+      }
+      
       // Format order items for email
-      const orderItemsHtml = this.formatOrderItems(order.items);
+      const orderItemsText = this.formatOrderItems(order.items);
       
       // Format delivery address
       const deliveryAddressFormatted = this.formatDeliveryAddress(order.deliveryAddress);
       
       // Replace placeholders in the message
       const personalizedMessage = template.message
-        .replace(/{supplierName}/g, order.fournisseurName)
+        .replace(/{supplierName}/g, order.fournisseurName || 'Fournisseur')
         .replace(/{orderNumber}/g, orderNumber)
         .replace(/{customerName}/g, order.userName)
         .replace(/{customerEmail}/g, order.userEmail)
-        .replace(/{customerPhone}/g, order.userPhone)
+        .replace(/{customerPhone}/g, order.userPhone || 'Non fourni')
         .replace(/{total}/g, order.total.toFixed(2))
         .replace(/{itemCount}/g, order.items.length.toString())
         .replace(/{deliveryAddress}/g, deliveryAddressFormatted)
-        .replace(/{orderItems}/g, orderItemsHtml)
+        .replace(/{orderItems}/g, orderItemsText)
         .replace(/{orderNotes}/g, order.orderNotes || 'Aucune note');
 
       const personalizedSubject = template.subject
         .replace(/{orderNumber}/g, orderNumber);
 
+      // EmailJS template parameters
       const templateParams = {
-        to_email: this.getSupplierEmail(order.fournisseurId), // You'll need to implement this
-        to_name: order.fournisseurName,
+        to_email: supplierEmail,
+        to_name: order.fournisseurName || 'Fournisseur',
         subject: personalizedSubject,
         message: personalizedMessage,
         order_id: orderNumber,
         status: order.status,
         status_type: template.type,
         company_name: 'Optimizi',
-        supplier_name: order.fournisseurName,
+        supplier_name: order.fournisseurName || 'Fournisseur',
         customer_name: order.userName,
         customer_email: order.userEmail,
-        customer_phone: order.userPhone,
+        customer_phone: order.userPhone || 'Non fourni',
         order_total: order.total.toFixed(2),
-        item_count: order.items.length,
+        item_count: order.items.length.toString(),
         delivery_address: deliveryAddressFormatted,
-        order_items: orderItemsHtml,
+        order_items: orderItemsText,
         order_notes: order.orderNotes || 'Aucune note'
       };
+
+      console.log('Sending supplier email with params:', {
+        serviceId: this.config.serviceId,
+        templateId: this.config.orderNotificationTemplateId,
+        toEmail: supplierEmail,
+        orderNumber: orderNumber
+      });
 
       const response = await emailjs.send(
         this.config.serviceId,
@@ -303,7 +325,7 @@ export class SupplierEmailService {
    */
   private formatOrderItems(items: OrderItem[]): string {
     return items.map(item => 
-      `• ${item.productName} - Quantité: ${item.quantity} ${item.unit} - Prix: €${item.totalPrice.toFixed(2)}`
+      `• ${item.productName} - Quantité: ${item.quantity} ${item.unit || 'pièce(s)'} - Prix: €${item.totalPrice.toFixed(2)}`
     ).join('\n');
   }
 
@@ -311,17 +333,69 @@ export class SupplierEmailService {
    * Format delivery address for email display
    */
   private formatDeliveryAddress(address: DeliveryAddress): string {
-    return `${address.street}, ${address.city} ${address.postalCode}, ${address.country}`;
+    let formatted = `${address.street}, ${address.city} ${address.postalCode}, ${address.country}`;
+    if (address.instructions) {
+      formatted += `\nInstructions: ${address.instructions}`;
+    }
+    return formatted;
   }
 
   /**
-   * Get supplier email address
-   * TODO: Implement this to fetch supplier email from your database
+   * Get supplier email address from database
    */
-  private getSupplierEmail(supplierId: string): string {
-    // For now, return a placeholder. You'll need to implement this
-    // to fetch the actual supplier email from your database
-    return 'supplier@example.com'; // Replace with actual implementation
+  private async getSupplierEmail(supplierId: string): Promise<string | null> {
+    try {
+      // First, get the supplier document to find the owner ID
+      const supplierQuery = query(
+        collection(db, 'Fournisseurs'),
+        where('id', '==', supplierId)
+      );
+      
+      let supplierSnapshot = await getDocs(supplierQuery);
+      
+      // If not found by id field, try by document ID
+      if (supplierSnapshot.empty) {
+        const supplierDoc = await getDocs(query(collection(db, 'Fournisseurs')));
+        const supplierData = supplierDoc.docs.find(doc => doc.id === supplierId);
+        if (supplierData) {
+          const data = supplierData.data();
+          const ownerId = data.ownerId;
+          
+          // Get the user email from the users collection
+          const userQuery = query(
+            collection(db, 'users'),
+            where('uid', '==', ownerId)
+          );
+          
+          const userSnapshot = await getDocs(userQuery);
+          if (!userSnapshot.empty) {
+            const userData = userSnapshot.docs[0].data();
+            return userData.email || null;
+          }
+        }
+      } else {
+        const supplierData = supplierSnapshot.docs[0].data();
+        const ownerId = supplierData.ownerId;
+        
+        // Get the user email from the users collection
+        const userQuery = query(
+          collection(db, 'users'),
+          where('uid', '==', ownerId)
+        );
+        
+        const userSnapshot = await getDocs(userQuery);
+        if (!userSnapshot.empty) {
+          const userData = userSnapshot.docs[0].data();
+          return userData.email || null;
+        }
+      }
+      
+      console.error(`No email found for supplier: ${supplierId}`);
+      return null;
+    } catch (error) {
+      console.error('Error fetching supplier email:', error);
+      return null;
+    }
   }
 
   /**
@@ -344,30 +418,106 @@ export class SupplierEmailService {
     return (
       this.config.serviceId !== 'YOUR_EMAILJS_SERVICE_ID' &&
       this.config.orderNotificationTemplateId !== 'YOUR_SUPPLIER_ORDER_TEMPLATE_ID' &&
-      this.config.publicKey !== 'YOUR_EMAILJS_PUBLIC_KEY'
+      this.config.publicKey !== 'YOUR_EMAILJS_PUBLIC_KEY' &&
+      this.config.serviceId.length > 0 &&
+      this.config.orderNotificationTemplateId.length > 0 &&
+      this.config.publicKey.length > 0
     );
   }
 
   /**
    * Get configuration status for debugging
    */
-  public getConfigStatus(): { isConfigured: boolean; missingFields: string[] } {
+  public getConfigStatus(): { isConfigured: boolean; missingFields: string[]; currentValues: any } {
     const missingFields: string[] = [];
     
-    if (this.config.serviceId === 'YOUR_EMAILJS_SERVICE_ID') {
+    if (this.config.serviceId === 'YOUR_EMAILJS_SERVICE_ID' || !this.config.serviceId) {
       missingFields.push('VITE_EMAILJS_SERVICE_ID');
     }
-    if (this.config.orderNotificationTemplateId === 'YOUR_SUPPLIER_ORDER_TEMPLATE_ID') {
+    if (this.config.orderNotificationTemplateId === 'YOUR_SUPPLIER_ORDER_TEMPLATE_ID' || !this.config.orderNotificationTemplateId) {
       missingFields.push('VITE_EMAILJS_SUPPLIER_ORDER_TEMPLATE_ID');
     }
-    if (this.config.publicKey === 'YOUR_EMAILJS_PUBLIC_KEY') {
+    if (this.config.publicKey === 'YOUR_EMAILJS_PUBLIC_KEY' || !this.config.publicKey) {
       missingFields.push('VITE_EMAILJS_PUBLIC_KEY');
     }
 
     return {
       isConfigured: missingFields.length === 0,
-      missingFields
+      missingFields,
+      currentValues: {
+        serviceId: this.config.serviceId,
+        templateId: this.config.orderNotificationTemplateId,
+        publicKey: this.config.publicKey
+      }
     };
+  }
+
+  /**
+   * Test email sending with a mock order
+   */
+  public async sendTestEmail(supplierEmail: string, supplierName: string = 'Test Supplier'): Promise<boolean> {
+    if (!this.isInitialized) {
+      this.initialize();
+    }
+
+    if (!this.isConfigured()) {
+      console.error('EmailJS not properly configured for testing');
+      return false;
+    }
+
+    try {
+      const testOrderNumber = 'TEST' + Date.now().toString().slice(-6);
+      const template = ORDER_STATUS_TEMPLATES.pending;
+      
+      const personalizedMessage = template.message
+        .replace(/{supplierName}/g, supplierName)
+        .replace(/{orderNumber}/g, testOrderNumber)
+        .replace(/{customerName}/g, 'Test Customer')
+        .replace(/{customerEmail}/g, 'test@example.com')
+        .replace(/{customerPhone}/g, '+33 1 23 45 67 89')
+        .replace(/{total}/g, '25.99')
+        .replace(/{itemCount}/g, '2')
+        .replace(/{deliveryAddress}/g, '123 Rue de Test, 75001 Paris, France')
+        .replace(/{orderItems}/g, '• Produit Test 1 - Quantité: 1 pièce(s) - Prix: €15.99\n• Produit Test 2 - Quantité: 1 pièce(s) - Prix: €9.99')
+        .replace(/{orderNotes}/g, 'Ceci est un email de test');
+
+      const personalizedSubject = template.subject
+        .replace(/{orderNumber}/g, testOrderNumber);
+
+      const templateParams = {
+        to_email: supplierEmail,
+        to_name: supplierName,
+        subject: personalizedSubject,
+        message: personalizedMessage,
+        order_id: testOrderNumber,
+        status: 'pending',
+        status_type: template.type,
+        company_name: 'Optimizi',
+        supplier_name: supplierName,
+        customer_name: 'Test Customer',
+        customer_email: 'test@example.com',
+        customer_phone: '+33 1 23 45 67 89',
+        order_total: '25.99',
+        item_count: '2',
+        delivery_address: '123 Rue de Test, 75001 Paris, France',
+        order_items: '• Produit Test 1 - Quantité: 1 pièce(s) - Prix: €15.99\n• Produit Test 2 - Quantité: 1 pièce(s) - Prix: €9.99',
+        order_notes: 'Ceci est un email de test'
+      };
+
+      console.log('Sending test email with params:', templateParams);
+
+      const response = await emailjs.send(
+        this.config.serviceId,
+        this.config.orderNotificationTemplateId,
+        templateParams
+      );
+
+      console.log('Test email sent successfully:', response);
+      return true;
+    } catch (error) {
+      console.error('Failed to send test email:', error);
+      return false;
+    }
   }
 }
 
