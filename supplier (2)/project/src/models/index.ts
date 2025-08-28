@@ -21,6 +21,7 @@ export interface Fournisseur {
   openingHours: string;
   image: string;
   ownerId: string;
+  estimatedDeliveryMinutes?: number;
   createdAt: string;
   updatedAt: string;
 }

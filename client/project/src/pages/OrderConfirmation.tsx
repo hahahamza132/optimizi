@@ -15,6 +15,8 @@ import {
   User
 } from 'lucide-react';
 import { useOrder } from '../hooks/useOrders';
+import { useApp } from '../context/AppContext';
+import { productService } from '../services/productService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 import OrderProgressTracker from '../components/OrderProgressTracker';
@@ -24,6 +26,7 @@ export default function OrderConfirmation() {
   const { orderId } = useParams<{ orderId: string }>();
   const { order, loading, error } = useOrder(orderId || '');
   const [copied, setCopied] = useState(false);
+  const { dispatch } = useApp();
 
   const copyOrderId = () => {
     if (orderId) {
@@ -55,6 +58,20 @@ export default function OrderConfirmation() {
       </div>
     );
   }
+
+  const handleReorder = async () => {
+    if (!order) return;
+    // Load products to ensure valid references
+    for (const item of order.items) {
+      const product = await productService.getProductById(item.productId);
+      if (product && product.stockQuantity > 0) {
+        // Add to cart with the same quantity
+        for (let i = 0; i < item.quantity; i++) {
+          dispatch({ type: 'ADD_TO_CART', payload: product });
+        }
+      }
+    }
+  };
 
   if (error || !order) {
     return (
@@ -171,7 +188,10 @@ export default function OrderConfirmation() {
                 </h3>
                 <div className="text-gray-600 dark:text-gray-300">
                   <p>{order.deliveryAddress.street}</p>
-                  <p>{order.deliveryAddress.city}, {order.deliveryAddress.postalCode}</p>
+                  {order.deliveryAddress.address2 && (
+                    <p>{order.deliveryAddress.address2}</p>
+                  )}
+                  <p>{order.deliveryAddress.city}{order.deliveryAddress.state ? `, ${order.deliveryAddress.state}` : ''}, {order.deliveryAddress.postalCode}</p>
                   <p>{order.deliveryAddress.country}</p>
                   {order.deliveryAddress.instructions && (
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -277,12 +297,12 @@ export default function OrderConfirmation() {
                   <ArrowRight className="w-4 h-4" />
                 </Link>
                 
-                <Link
-                  to="/products"
+                <button
+                  onClick={handleReorder}
                   className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-center block"
                 >
                   Commander à nouveau
-                </Link>
+                </button>
               </div>
             </div>
           </div>

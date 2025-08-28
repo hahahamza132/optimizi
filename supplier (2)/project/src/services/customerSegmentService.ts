@@ -36,8 +36,8 @@ export class CustomerSegmentService {
       });
 
       // Define segment thresholds
-      const HIGH_VALUE_THRESHOLD = 500;
-      const MEDIUM_VALUE_THRESHOLD = 200;
+      const HIGH_VALUE_THRESHOLD = 300; // lowered to surface segments
+      const MEDIUM_VALUE_THRESHOLD = 100;
       const NEW_CUSTOMER_MAX_ORDERS = 1;
 
       const segments = {

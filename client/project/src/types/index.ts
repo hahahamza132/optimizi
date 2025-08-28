@@ -107,7 +107,9 @@ export interface Order {
 
 export interface DeliveryAddress {
   street: string;
+  address2?: string;
   city: string;
+  state?: string;
   postalCode: string;
   country: string;
   instructions?: string;

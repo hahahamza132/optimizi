@@ -55,7 +55,7 @@ export class KPIDetailService {
           { label: 'Pending', value: Math.round(metrics.totalOrders * 0.05), percentage: 5 }
         ],
         relatedMetrics: [
-          { name: 'Avg Order Value', value: `$${metrics.averageOrderValue.toFixed(2)}`, impact: 'positive' as const },
+          { name: 'Avg Order Value', value: `${metrics.averageOrderValue.toFixed(2)} TND`, impact: 'positive' as const },
           { name: 'Order Frequency', value: '2.3/month', impact: 'positive' as const },
           { name: 'Return Rate', value: `${metrics.returnRate.toFixed(1)}%`, impact: 'negative' as const }
         ]
@@ -66,8 +66,8 @@ export class KPIDetailService {
         calculation: "SUM(orders.total WHERE payment_status = 'paid')",
         benchmark: "Revenue growth of 15-25% annually is considered healthy for e-commerce businesses. Your current trajectory shows strong performance.",
         insights: [
-          `Generated $${metrics.totalRevenue.toFixed(2)} in total revenue`,
-          `Average revenue per customer: $${(metrics.totalRevenue / metrics.totalCustomers).toFixed(2)}`,
+          `Generated ${metrics.totalRevenue.toFixed(2)} TND in total revenue`,
+          `Average revenue per customer: ${(metrics.totalRevenue / metrics.totalCustomers).toFixed(2)} TND`,
           `Revenue growth rate: ${metrics.revenueGrowth.toFixed(1)}% vs last month`,
           `Gross margin: ${metrics.grossMargin.toFixed(1)}%`
         ],
@@ -84,8 +84,8 @@ export class KPIDetailService {
           { label: 'Other Income', value: metrics.totalRevenue * 0.05, percentage: 5 }
         ],
         relatedMetrics: [
-          { name: 'Net Profit', value: `$${metrics.netProfit.toFixed(2)}`, impact: 'positive' as const },
-          { name: 'Operating Expenses', value: `$${metrics.operatingExpenses.toFixed(2)}`, impact: 'negative' as const },
+          { name: 'Net Profit', value: `${metrics.netProfit.toFixed(2)} TND`, impact: 'positive' as const },
+          { name: 'Operating Expenses', value: `${metrics.operatingExpenses.toFixed(2)} TND`, impact: 'negative' as const },
           { name: 'Profit Margin', value: `${((metrics.netProfit / metrics.totalRevenue) * 100).toFixed(1)}%`, impact: 'positive' as const }
         ]
       },

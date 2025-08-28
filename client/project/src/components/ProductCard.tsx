@@ -36,10 +36,10 @@ export default function ProductCard({ product, showCategory = false, variant = '
     return (
       <Link 
         to={`/product/${product.id}`} 
-        className="group cursor-pointer block"
+        className="group cursor-pointer block h-full"
         onClick={handleProductView}
       >
-        <div className="bg-white/70 dark:bg-neutral-800/70 backdrop-blur-soft rounded-soft-lg shadow-soft hover:shadow-soft-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-white/20 dark:border-neutral-700/30">
+        <div className="bg-white/70 dark:bg-neutral-800/70 backdrop-blur-soft rounded-soft-lg shadow-soft hover:shadow-soft-lg transform hover:-translate-y-1 transition-all duration-300 overflow-hidden border border-white/20 dark:border-neutral-700/30 h-full flex flex-col">
           <div className="relative overflow-hidden">
             <div className="aspect-square overflow-hidden">
               <img
@@ -88,7 +88,7 @@ export default function ProductCard({ product, showCategory = false, variant = '
             </button>
           </div>
           
-          <div className="p-4">
+          <div className="p-4 flex flex-col flex-1">
             <h3 className="font-semibold text-neutral-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2 mb-2 text-sm">
               {product.name}
             </h3>
@@ -107,7 +107,7 @@ export default function ProductCard({ product, showCategory = false, variant = '
               </div>
             )}
             
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mt-auto">
               <div className="flex flex-col">
                 {product.discount > 0 && (
                   <span className="text-xs text-neutral-500 dark:text-neutral-400 line-through">
@@ -135,10 +135,10 @@ export default function ProductCard({ product, showCategory = false, variant = '
   return (
     <Link 
       to={`/product/${product.id}`} 
-      className="group cursor-pointer block"
+      className="group cursor-pointer block h-full"
       onClick={handleProductView}
     >
-      <div className="bg-white/80 dark:bg-neutral-800/80 backdrop-blur-soft rounded-soft-xl shadow-soft hover:shadow-soft-xl transform hover:-translate-y-2 transition-all duration-500 overflow-hidden border border-white/30 dark:border-neutral-700/30 hover:border-primary-200 dark:hover:border-primary-800">
+      <div className="bg-white/80 dark:bg-neutral-800/80 backdrop-blur-soft rounded-soft-xl shadow-soft hover:shadow-soft-xl transform hover:-translate-y-2 transition-all duration-500 overflow-hidden border border-white/30 dark:border-neutral-700/30 hover:border-primary-200 dark:hover:border-primary-800 h-full flex flex-col">
         <div className="relative overflow-hidden">
           <div className="aspect-[4/3] overflow-hidden">
             <img
@@ -203,7 +203,7 @@ export default function ProductCard({ product, showCategory = false, variant = '
           )}
         </div>
         
-        <div className="p-6">
+        <div className="p-6 flex flex-col flex-1">
           <div className="flex items-start justify-between mb-3">
             <h3 className="text-xl font-bold text-neutral-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors line-clamp-2 flex-1 mr-3">
               {product.name}
@@ -251,7 +251,7 @@ export default function ProductCard({ product, showCategory = false, variant = '
             </div>
           )}
           
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mt-auto pt-2">
             <div className="flex items-center gap-4">
               <ProductRating product={product} compact={true} showReviews={false} />
               <span className="text-sm text-neutral-600 dark:text-neutral-400">par {product.unit}</span>
