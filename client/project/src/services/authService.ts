@@ -3,7 +3,10 @@ import {
   createUserWithEmailAndPassword, 
   signOut, 
   onAuthStateChanged,
-  User as FirebaseUser
+  User as FirebaseUser,
+  updatePassword,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config.js';
@@ -153,6 +156,21 @@ export const authService = {
     } catch (error) {
       console.error('Error validating client access:', error);
       return false;
+    }
+  },
+
+  // Change password with re-authentication
+  async changePassword(email: string, currentPassword: string, newPassword: string): Promise<void> {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('Utilisateur non connecté');
+
+      const credential = EmailAuthProvider.credential(email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+      await updatePassword(user, newPassword);
+    } catch (error: any) {
+      console.error('Change password error:', error);
+      throw new Error(error.message || 'Échec du changement de mot de passe');
     }
   }
 };
