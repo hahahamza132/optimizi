@@ -13,7 +13,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete }) 
   const hasDiscount = parseFloat(product.discount) > 0;
 
   return (
-    <div className={`bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ${isOutOfStock ? 'opacity-75' : ''}`}>
+    <div className={`bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 ${isOutOfStock ? 'opacity-75' : ''} h-full flex flex-col`}>
       <div className="relative">
         <img
           src={product.imageURL || 'https://images.pexels.com/photos/90946/pexels-photo-90946.jpeg'}
@@ -39,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete }) 
         )}
       </div>
       
-      <div className="p-6">
+      <div className="p-6 flex flex-col flex-1">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">{product.title}</h3>
         <p className="text-gray-600 text-sm mb-4 line-clamp-2">{product.description}</p>
         
@@ -58,7 +58,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onEdit, onDelete }) 
           </div>
         )}
         
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4 mt-auto">
           <div>
             <div className="flex items-center space-x-2">
               {hasDiscount ? (

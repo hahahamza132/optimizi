@@ -194,6 +194,37 @@ export const masterOrderService = {
     }
   },
 
+  // Allow cancellation of master order within a grace period
+  async cancelMasterOrder(orderId: string): Promise<void> {
+    try {
+      const masterOrderRef = doc(db, MASTER_ORDERS_COLLECTION, orderId);
+      const masterSnap = await getDoc(masterOrderRef);
+      if (!masterSnap.exists()) throw new Error('Order not found');
+
+      const master = masterSnap.data() as MasterOrder;
+      if (master.status !== 'pending' && master.status !== 'confirmed') {
+        throw new Error('Order cannot be cancelled at this stage');
+      }
+
+      await updateDoc(masterOrderRef, {
+        status: 'cancelled',
+        updatedAt: new Date().toISOString()
+      });
+
+      // Also cancel all sub-orders
+      const subOrders = await this.getSubOrdersByMasterOrderId(orderId);
+      await Promise.all(
+        subOrders.map((sub) => updateDoc(doc(db, SUB_ORDERS_COLLECTION, sub.id), {
+          status: 'cancelled',
+          updatedAt: new Date().toISOString()
+        }))
+      );
+    } catch (error) {
+      console.error('Error cancelling master order:', error);
+      throw error;
+    }
+  },
+
   // Get master order by ID
   async getMasterOrderById(orderId: string): Promise<MasterOrder | null> {
     try {

@@ -99,7 +99,7 @@ const CustomerSegmentWidget: React.FC<CustomerSegmentWidgetProps> = ({
         <UsersIcon className="h-6 w-6 text-blue-500" />
       </div>
       
-      {segments.length === 0 ? (
+      {segments.length === 0 || totalCustomers === 0 ? (
         <div className="text-center py-8">
           <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500">No customer data available</p>
@@ -118,7 +118,7 @@ const CustomerSegmentWidget: React.FC<CustomerSegmentWidgetProps> = ({
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-semibold text-gray-900">{segment.count} customers</p>
-                    <p className="text-xs text-gray-600">${segment.revenue.toFixed(2)}</p>
+                    <p className="text-xs text-gray-600">{segment.revenue.toFixed(2)} TND</p>
                   </div>
                 </div>
                 
@@ -145,7 +145,7 @@ const CustomerSegmentWidget: React.FC<CustomerSegmentWidgetProps> = ({
                 <p className="text-sm text-blue-600 font-medium">Total Customers</p>
               </div>
               <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-3 border border-green-200">
-                <p className="text-2xl font-bold text-green-700">${totalRevenue.toFixed(0)}</p>
+                <p className="text-2xl font-bold text-green-700">{totalRevenue.toFixed(0)} TND</p>
                 <p className="text-sm text-green-600 font-medium">Total Revenue</p>
               </div>
             </div>

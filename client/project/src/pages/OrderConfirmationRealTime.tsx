@@ -2,12 +2,15 @@ import React from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { CheckCircle, Truck, XCircle, Package, Star, ArrowLeft, MapPin, CreditCard, Clock } from 'lucide-react';
 import { useOrderRealTimeSync } from '../hooks/useOrderRealTimeSync';
+import { useApp } from '../context/AppContext';
+import { productService } from '../services/productService';
 import LoadingSpinner from '../components/LoadingSpinner';
 import ErrorMessage from '../components/ErrorMessage';
 
 export default function OrderConfirmation() {
   const { orderId } = useParams();
   const { order, loading, error } = useOrderRealTimeSync(orderId);
+  const { dispatch } = useApp();
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -25,6 +28,17 @@ export default function OrderConfirmation() {
         return <XCircle className="w-6 h-6 text-red-500" />;
       default:
         return <Package className="w-6 h-6 text-gray-500" />;
+    }
+  };
+  const handleReorder = async () => {
+    if (!order) return;
+    for (const item of order.items) {
+      const product = await productService.getProductById(item.productId);
+      if (product && product.stockQuantity > 0) {
+        for (let i = 0; i < item.quantity; i++) {
+          dispatch({ type: 'ADD_TO_CART', payload: product });
+        }
+      }
     }
   };
 
@@ -205,7 +219,10 @@ export default function OrderConfirmation() {
               </div>
               <div className="text-gray-600 dark:text-gray-300">
                 <p>{order.deliveryAddress.street}</p>
-                <p>{order.deliveryAddress.city}, {order.deliveryAddress.postalCode}</p>
+                {order.deliveryAddress.address2 && (
+                  <p>{order.deliveryAddress.address2}</p>
+                )}
+                <p>{order.deliveryAddress.city}{order.deliveryAddress.state ? `, ${order.deliveryAddress.state}` : ''}, {order.deliveryAddress.postalCode}</p>
                 <p>{order.deliveryAddress.country}</p>
                 {order.deliveryAddress.instructions && (
                   <p className="mt-2 text-sm italic">Instructions : {order.deliveryAddress.instructions}</p>
@@ -261,12 +278,12 @@ export default function OrderConfirmation() {
           >
             Voir toutes les commandes
           </Link>
-          <Link
-            to="/products"
+          <button
+            onClick={handleReorder}
             className="px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-xl font-medium hover:shadow-lg transform hover:-translate-y-0.5 transition-all text-center"
           >
             Commander à nouveau
-          </Link>
+          </button>
         </div>
       </div>
     </div>

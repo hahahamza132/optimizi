@@ -19,7 +19,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const Dashboard: React.FC = () => {
   const { userData } = useAuth();
-  const { fournisseur } = useFournisseur();
+  const { fournisseur, updateFournisseur } = useFournisseur();
+  const [deliveryMinutes, setDeliveryMinutes] = useState<number>(fournisseur?.estimatedDeliveryMinutes || 30);
   const { 
     metrics, 
     revenueBreakdown, 
@@ -75,6 +76,33 @@ const Dashboard: React.FC = () => {
         </div>
       </div>
 
+      {/* Delivery Time Setting */}
+      <div className="bg-white rounded-3xl p-6 shadow-lg">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Estimated Delivery Time</h3>
+            <p className="text-sm text-gray-600">Shown to customers on product cards and during checkout.</p>
+          </div>
+          <div className="flex items-center space-x-3">
+            <input
+              type="number"
+              min={5}
+              max={240}
+              value={deliveryMinutes}
+              onChange={(e) => setDeliveryMinutes(parseInt(e.target.value || '0', 10))}
+              className="w-24 px-3 py-2 border border-gray-300 rounded-xl"
+            />
+            <span className="text-gray-700">minutes</span>
+            <button
+              onClick={() => updateFournisseur({ estimatedDeliveryMinutes: deliveryMinutes })}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Enhanced KPI Grid */}
       <KPIGrid metrics={metrics} loading={loading} />
 
@@ -124,7 +152,7 @@ const Dashboard: React.FC = () => {
                   borderRadius: '12px',
                   boxShadow: '0 10px 25px rgba(0,0,0,0.1)'
                 }}
-                formatter={(value, name) => [`$${value}`, 'Sales']}
+                formatter={(value, name) => [`${value} TND`, 'Sales']}
               />
               <Line 
                 type="monotone" 
@@ -205,7 +233,7 @@ const Dashboard: React.FC = () => {
                       {order.userName}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
-                      ${order.total?.toFixed(2)}
+                      {order.total?.toFixed(2)} TND
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${

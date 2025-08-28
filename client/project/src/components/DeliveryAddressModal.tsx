@@ -13,9 +13,11 @@ export default function DeliveryAddressModal({ isOpen, onClose, onSave }: Delive
   const { state, dispatch } = useApp();
   const [formData, setFormData] = useState({
     street: '',
+    address2: '',
     city: '',
+    state: '',
     postalCode: '',
-    country: 'France',
+    country: 'Tunisie',
     instructions: '',
   });
   const [loading, setLoading] = useState(false);
@@ -53,9 +55,11 @@ export default function DeliveryAddressModal({ isOpen, onClose, onSave }: Delive
   const handleClear = () => {
     setFormData({
       street: '',
+      address2: '',
       city: '',
+      state: '',
       postalCode: '',
-      country: 'France',
+      country: 'Tunisie',
       instructions: '',
     });
     setError(null);
@@ -99,11 +103,24 @@ export default function DeliveryAddressModal({ isOpen, onClose, onSave }: Delive
                 value={formData.street}
                 onChange={(e) => setFormData({ ...formData, street: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                placeholder="123 Rue Principale, Apt 4B"
+                placeholder="123 Rue Principale"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Complément d'adresse
+              </label>
+              <input
+                type="text"
+                value={formData.address2}
+                onChange={(e) => setFormData({ ...formData, address2: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                placeholder="Appartement, étage, etc."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Ville *
@@ -114,8 +131,26 @@ export default function DeliveryAddressModal({ isOpen, onClose, onSave }: Delive
                   value={formData.city}
                   onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                  placeholder="Paris"
+                  placeholder="Tunis"
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Gouvernorat
+                </label>
+                <select
+                  value={formData.state}
+                  onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                >
+                  <option value="">Sélectionnez un gouvernorat</option>
+                  {[
+                    'Ariana','Béja','Ben Arous','Bizerte','Gabès','Gafsa','Jendouba','Kairouan','Kasserine','Kébili','Kef','Mahdia','Manouba','Médenine','Monastir','Nabeul','Sfax','Sidi Bouzid','Siliana','Sousse','Tataouine','Tozeur','Tunis','Zaghouan','Bizerte Sud','Ben Arous Sud','Grand Tunis','Cap Bon'
+                  ].map((g) => (
+                    <option key={g} value={g}>{g}</option>
+                  ))}
+                </select>
               </div>
 
               <div>
@@ -143,10 +178,7 @@ export default function DeliveryAddressModal({ isOpen, onClose, onSave }: Delive
                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
               >
-                <option value="France">France</option>
-                <option value="Belgium">Belgique</option>
-                <option value="Switzerland">Suisse</option>
-                <option value="Luxembourg">Luxembourg</option>
+                <option value="Tunisie">Tunisie</option>
               </select>
             </div>
 
