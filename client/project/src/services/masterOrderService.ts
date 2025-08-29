@@ -374,32 +374,7 @@ export const masterOrderService = {
       
       console.log(`📊 [Client] SubOrder ${subOrderId} status change: ${previousStatus} → ${status}`);
       
-      // Check if we need to decrement stock (when status changes to "out_for_delivery")
-      const shouldDecrementStock = status === 'out_for_delivery' && previousStatus !== 'out_for_delivery';
-      
-      if (shouldDecrementStock) {
-        console.log(`🔄 [Stock] Status changed to "out_for_delivery", decrementing stock for subOrder ${subOrderId}`);
-        
-        // Prepare items for stock decrement
-        const stockItems = currentSubOrder.items.map(item => ({
-          productId: item.productId,
-          quantity: item.quantity
-        }));
-        
-        console.log(`📦 [Stock] Items to decrement:`, stockItems);
-        
-        // Decrement stock for all items in this sub-order
-        const stockResult = await productService.decrementMultipleProductsStock(stockItems);
-        
-        if (!stockResult.success) {
-          console.error(`❌ [Stock] Failed to decrement stock for subOrder ${subOrderId}:`, stockResult.errors);
-          // You can choose to either throw an error or continue with status update
-          // For now, we'll log the error but continue with the status update
-          console.warn(`⚠️ [Stock] Continuing with status update despite stock decrement errors`);
-        } else {
-          console.log(`✅ [Stock] Successfully decremented stock for all items in subOrder ${subOrderId}`);
-        }
-      }
+      // Stock decrement is handled on the supplier side only to avoid double counting
       
       // Update sub-order status
       const updateData: any = {
